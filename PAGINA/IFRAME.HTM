@@ -1,0 +1,356 @@
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Menú</title>
+		<style>
+			table {table-layout:fixed}
+     			//td {background-color:grey }
+			.activa{cursor:pointer; background-color:yellow}
+			.inactiva{cursor:pointer; background-color:grey}
+			 .oculta { display:none; }
+		</style>
+		<script type="text/javascript">
+			var faseConfiguracion=true;
+			var aactivo=new Array(0,1,0,0,0,1);//pines que analogicos que usamos
+			var posibles=new Array(2,3,5,6,7,8,9);//pines digitales que se pueden usar
+			var activo=new Array(0,0,1,1,0,1,1,1,1,1,0,0,0,0);//pines digitales que usamos
+			var tipo_entrada=new Array(1,1,1,1,1,1,1,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0)
+			var modo_salida=new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0);//ciertos pines digitales pueden tener salida analógica o digital.
+			var dig_analog=new Array(0,0,0,1,0,1,1,0,0,1,1,1,0,0);//si vale 1 el pin puede tener salida analógica si 0 solo digital
+			var avalores;//array con los valores analógicos recibidos
+			var dvalores;//array con los valores digitales recibidos
+			//REPRESENTA SOBRE LA TABLA EL CONJUNTO DE VALORES RECIBIDOS Y LA INTERFAZ ADECUADA PARA ENVIAR
+			function dibuja (pos){
+				var indice=0;
+				for(var i=0;i<posibles.length;i++){
+					if(posibles[i]==pos){indice=i;break;}
+				}
+				if (activo[pos]){
+					document.getElementById('A0'+pos).className='activa';
+					if(tipo_entrada[pos]==1){//alert('vemos algo +');
+						document.getElementById('T'+pos).innerHTML='INPUT';//'<select name="TIPO'+pos+'" onChange="trataTipo('+pos+', this.value)"><option value="0">OUTPUT</option><option selected="selected" value="1">INPUT</option></select>';
+						if(dig_analog[pos]==1){ document.getElementById('M'+pos).innerHTML='';}
+						document.getElementById('VD'+pos).innerHTML=''+dvalores[indice];						
+					}else{//alert('vemos algo');
+						document.getElementById("T"+pos).innerHTML='OUTPUT';//'<select name="TIPO'+pos+'" onChange="trataTipo('+pos+', this.value)"><option selected="selected" value="0">OUTPUT</option><option value="1">INPUT</option></select>';
+						if(dig_analog[pos]==1){
+							if(modo_salida[pos]==0){
+								document.getElementById('M'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0" selected="selected">DIGITAL</option><option value="1">ANALÓGICO</option></select>';
+								document.getElementById('VD'+pos).innerHTML='<select id="VDD'+indice+'" name="VDD'+indice+'"><option value="1">HIGH</option><option value="0">LOW</option></select>';
+							}else{
+								document.getElementById('M'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0">DIGITAL</option><option value="1" selected="selected">ANALÓGICO</option></select>';
+								document.getElementById('VD'+pos).innerHTML='<input maxlength="3" size="3" id="VDA'+indice+'" name="VDA'+indice+'">';
+							}
+						}else{
+							document.getElementById('VD'+pos).innerHTML='<select id="VDD'+indice+'" name="VDD'+indice+'"><option value="1">HIGH</option><option value="0">LOW</option></select>';
+						}
+					}
+				}else{
+					document.getElementById('A0'+pos).className='inactiva';
+					document.getElementById('T'+pos).innerHTML='';
+					if(dig_analog[pos]==1) document.getElementById('M'+pos).innerHTML='';
+					document.getElementById('VD'+pos).innerHTML='';
+				}
+			}
+			//AJUSTA LOS VALORES DE LOS ARRAY QUE CORRESPONDEN A LOS PINES ACTIVOS AL RECIBIR LA RESPUESTA Y AL ARRANCAR
+			function trataAnalogicoInicial(a,fuente){
+				if(aactivo[a]==0){
+					fuente.className='inactiva';
+					document.getElementById("VA"+a).innerHTML='';
+				}
+				else {
+					fuente.className='activa';
+					document.getElementById("VA"+a).innerHTML=avalores[a];
+				}
+			}
+			//AJUSTA LOS VALORES DE LOS ARRAY QUE CORRESPONDEN A LOS PINES ACTIVOS CUANDO SE ACTIVA/DESACTIVA UNO DE ELLOS
+			function trataAnalogico(a,fuente){
+				aactivo[a]=(aactivo[a]+1)%2;
+				if(aactivo[a]==0){
+					fuente.className='inactiva';
+					document.getElementById("VA"+a).innerHTML='';
+				}
+				else {
+					fuente.className='activa';
+					document.getElementById("VA"+a).innerHTML=avalores[a];
+				}
+			}
+			//AJUSTA LOS VALORES DE LOS ARRAY QUE CORRESPONDEN A LOS PINES ACTIVOS AL RECIBIR LA RESPUESTA Y AL ARRANCAR
+			function trataDigitalInicial(a,fuente){
+				var b=1*a;
+				trataTipo(b, tipo_entrada[b]);
+			}
+			//AJUSTA LOS VALORES DE LOS ARRAY QUE CORRESPONDEN A LOS PINES ACTIVOS CUANDO SE ACTIVA/DESACTIVA UNO DE ELLOS
+			function trataDigital(a,fuente){
+				var b=1*a;
+				activo[b]=(activo[b]+1)%2;
+				trataTipo(b, tipo_entrada[b]);
+			}
+			//AJUSTA LOS VALORES DE LOS ARRAY CUANDO SE CAMBIA EL MODO IMPUT OUTPUT O SE ACTIVA O DESACTIVA
+			function trataTipo(pos, v){
+				tipo_entrada[pos]=v;
+				trataModos(pos,modo_salida[pos]);
+			}
+			//AJUSTA EL VALOR DEL MODO DE SALIDA PARA LOS PINES QUE LO ADMITEN DIGITAL O ANALOGICA PWM, LUEGO LANZA EL PROCESO DE DIBUJO
+			function trataModos(pos,v){
+				modo_salida[pos]=v;
+				dibuja (pos);
+			}
+			//recibe la respuesta y la coloca en el panel
+			function abc(s){
+				
+				//alert(s);//CUIDADO ARDUINO DEVUELVE LA RESPUESTA ENTRE LAS ETIQUETAS <pre>..</pre> hay que quitarlas
+				//s=s.substring(5);s=s.substring(0,s.length-6);//alert(s);//le quitamos las etiquetas
+				if(faseConfiguracion){
+					var auxsalidas=s.split("#");
+					for (var i=0;i<auxsalidas.length;i++){
+						tipo_entrada[posibles[i]]=auxsalidas[i];
+					}
+					avalores=['-','-','-','-','-','-'];
+                                	dvalores=['-','-','-','-','-','-','-'];
+					for(var i=0;i<posibles.length;i++){
+						var aux='0'+posibles[i];
+						trataDigitalInicial(aux,document.getElementById('A'+aux));
+					}
+					faseConfiguracion=false;
+				}else{
+					var entradas=s.split("##");
+					avalores=entradas[0].split("#");
+					dvalores=entradas[1].split("#");
+					for(var i=0;i<posibles.length;i++){
+						var aux='0'+posibles[i];
+						trataDigitalSin(aux,document.getElementById('A'+aux));
+					}
+			    	}
+				for(var i=0;i<aactivo.length;i++){
+					trataAnalogicoInicial(i,document.getElementById("AA"+i))
+				}
+			}
+			//PREPARA LA CODIFICACION DE LOS VALORES QUE SE PONEN COMO SALIDA Y LA TRASLADA AL FORMULARIO DE ENVIO
+			function preparaFormulario(){
+				var codigo='';
+				for(var i=0;i<posibles.length;i++){
+					if(activo[posibles[i]]==1){
+						codigo+=tipo_entrada[posibles[i]];
+						if(tipo_entrada[posibles[i]]==1){
+							codigo+='Iiii';
+						}else{
+							if(modo_salida[posibles[i]]==0){
+								codigo+=document.getElementById('VDD'+i).value+'iii';
+							}else{
+								var aux=document.getElementById('VDA'+i).value;
+								if(isNaN(aux))aux='000';
+								else if(aux<0)aux='000';
+								else if(aux>255)aux='255';
+								else{
+									aux='000'+aux;
+									aux=aux.substring(aux.length-3, aux.length); 
+								}
+								codigo+='I'+aux;
+							}
+						}
+					}else{
+						codigo+='1Iiii';
+					}
+				}
+				document.getElementById('codigo').value=codigo;
+				return codigo;
+			}
+			
+			/**
+			 * SIMULACIONES DE FUNCIONES VIA WEB, JAVASCRIPT CONTROLA ARDUINO
+			 */
+			//SIMPLIFICACION DE LA FUNCION TRATA DIGITAL PARA LAS SIMULACIONES EN REALIDAD NO HACE NADA
+			function trataDigitalSin(a,fuente){
+				var b=1*a; //alert(b+'; '+tipo_entrada[b]+'; '+(tipo_entrada[b]==1));
+				var aux=0;
+				for (var i=0;i<posibles.length;i++){
+					aux=i;
+					if (b==posibles[i]) break;
+				}
+				if(activo[b]==1 && tipo_entrada[b]==1)document.getElementById('VD'+b).innerHTML=dvalores[aux];				
+			}
+			var trataDigConSin=0;//para hacer que la interfaz sea menos interactiva en las simulaciones 0 normal 1 simulacion
+			
+			//funcion que para la simulación, se le pasa el enlace al hilo de la simulacion la detiene y la desrealciona.
+			function DetenSimulacion(t){
+				clearInterval(t);  t=undefined;
+				trataDigConSin=0;
+			}
+			var para;//contiene el enlace al hilo paralelo que lleva la simulacion es necesario para detenerla
+			var bindice;//indices globales que nos guardan el pin 6 que se ha seleccionado para las simulaciones
+			var bpos;//indices globales que nos guardan el pin 6 que se ha seleccionado para las simulaciones
+			//SIMULACION BLINK, PARTE QUE CONFIGURA LA INTERFAZ DETIENE OTROS HILOS Y LANZA EL HILO LOOP
+			var conmutador=0;//ALMACENA SI SE DEBE ENCENDER O APAGAR CUANDO SE ACTIVE BLINKLOOP
+			function BlinkSetUP(){
+				aactivo=new Array(0,0,0,0,0,0);//no usamos pines que analogicos
+				activo=new Array      (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//pines digitales que usamos, solo el 6
+				tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el 6  0
+				modo_salida=new Array (0,0,0,0,0,0,0,0,0,0,0,0,0,0);//ciertos pines digitales pueden tener salida analógica o digital.
+				var indice=3;bindice=indice;//el pin 6 es el 4º de los que se pueden usar
+				var pos=6;bpos=pos;// las dos variables son para el while
+				for (var i=0;i<7;i++){
+					if(i<6) trataAnalogicoInicial(i,document.getElementById("AA"+i));//tratamos los analogicos
+					var aux='0'+posibles[i];
+					trataDigitalInicial(aux,document.getElementById('A'+aux));//tratamos los digitales
+				}
+				DetenSimulacion(para)//paramos simulaciones previas
+				trataDigConSin=1;
+				para=setInterval(BlinkLoop, 1000);//lanzamos el bloque loop
+			}
+			//PARTE QUE SE REPITE DE LOOP SE LANZA COMO UN HILO RECURRENTE CADA 1000 ms
+			function BlinkLoop(){var pos=bpos;var indice=bindice;
+				if(conmutador==0){
+					trataTipo(6, 0);//lanzamos la orden de mostrar la interface
+					document.getElementById('VD'+pos).innerHTML='<select id="VDD'+indice+'" name="VDD'+indice+'"><option value="1">HIGH</option><option value="0">LOW</option></select>';
+				}else{
+					trataTipo(6, 0);//lanzamos la orden de mostrar la interface
+					document.getElementById('VD'+pos).innerHTML='<select id="VDD'+indice+'" name="VDD'+indice+'"><option value="1">HIGH</option><option value="0" selected="selected">LOW</option></select>';
+				}
+				conmutador++;conmutador=conmutador%2;
+				preparaFormulario();document.acciones.submit();//se envia
+			}
+			//FUNCION QUE VA SUBIENDO LA INTENSIDAD DEL LED 6 Y LUEGO LA VA BAJANDO UTILIZANDO LA SALIDA ANALOGICA POR PWM
+			var nivel=0;//variable que almacena el nivel de iluminacion que lanzará SubeBajaLoop
+			var sentido=1;//si aumenta (1) o si disminuye (-1)
+			function SubeBajaSetUP(){
+				aactivo=new Array(0,0,0,0,0,0);//no usamos pines que analogicos
+				activo=new Array      (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//pines digitales que usamos, solo el 6
+				tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el PIN 6  0
+				modo_salida=new Array (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//SELECCIONAMOS LA SALIDA DIGITAL DEL PIN 6 A 1.
+				var indice=3;bindice=indice;//el pin 6 es el 4º de los que se pueden usar
+				var pos=6;bpos=pos;// las dos variables son para el while
+				for (var i=0;i<7;i++){
+					if(i<6) trataAnalogicoInicial(i,document.getElementById("AA"+i));//tratamos los analogicos
+					var aux='0'+posibles[i];
+					trataDigitalInicial(aux,document.getElementById('A'+aux));//tratamos los digitales
+				}
+				//paramos otras simulaciones que se hubiesen lanzado
+				DetenSimulacion(para);
+				trataDigConSin=1;
+				para=setInterval(SubeBajaLoop, 200);//lanzamos el bloque loop como un hilo paralelo que se repite cada 100 ms
+			}
+			function SubeBajaLoop(){
+				var pos=bpos;var indice=bindice;
+				trataTipo(6, 0);//lanzamos la orden de mostrar la interface 
+				document.getElementById('VDA'+indice).value=nivel;
+				nivel=nivel+5*sentido;//subimos o bajamos a intervalos de 5ms
+				if(nivel>255){
+					nivel=255;//lo ajustamos al maximo
+					sentido=-1;//y pasamos a bajar
+				}
+				if(nivel<0){
+					nivel=0;//lo ajustamos al minimo
+					sentido=1;//y pasamos a subir
+				}
+				preparaFormulario();document.acciones.submit();//se envia				
+			}
+       		 </script>
+	</head>
+	<body>
+		<div class="oculta">
+			<iframe src="/CONFIGURA" name="iframe_a" onload="/*alert(this.innerHTML);*/parent.abc(this.contentDocument.getElementsByTagName('body')[0].innerHTML);/*window.frames[0].document.innerHTML)*/"></iframe>
+			<!--<iframe src="./recibe-parametros3.php?destino=iframe" name="iframe_a" onload="/*alert('lll'+parent);*/parent.abc(this.contentDocument.getElementsByTagName('body')[0].innerHTML);/*window.frames[0].document.innerHTML)*/"></iframe>-->
+		</div>
+		<p><button style="cursor:pointer" value="ENVIAR" name="ENVIAR" onclick="alert(preparaFormulario());document.acciones.submit()">ENVIAR</button><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+		<button style="cursor:pointer" value="BLINK" name="BLINK" onclick="BlinkSetUP()">BLINK 6</button><button style="cursor:pointer" value="SubeBaja" name="SubeBaja" onclick="SubeBajaSetUP()">SubeBaja 6</button>
+		<button style="cursor:pointer" value="PARA" name="PARA" onclick="DetenSimulacion(para)">PARA</button></p>
+		<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2"><tbody>
+			<tr>
+				<td colspan="2" rowspan="8" style="vertical-align: top;">
+				</td>
+				<td style="vertical-align: top;">13<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;">12<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;">~11<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;">~10<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="A09" onclick="trataDigital('09',this)" class="inactiva">~9<br></td>
+				<td style="vertical-align: top;" id="VD9"><br></td>
+				<td style="vertical-align: top;" id="T9"><br></td>
+				<td style="vertical-align: top;" id="M9"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="A08" onclick="trataDigital('08',this)" class="inactiva">8<br></td>
+				<td style="vertical-align: top;" id="VD8"><br></td>
+				<td style="vertical-align: top;" id="T8"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="A07" onclick="trataDigital('07',this)" class="inactiva">7<br></td>
+				<td style="vertical-align: top;" id="VD7"><br></td>
+				<td style="vertical-align: top;" id="T7"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="A06" onclick="trataDigital('06',this)" class="inactiva">~6<br></td>
+				<td style="vertical-align: top;" id="VD6"><br></td>
+				<td style="vertical-align: top;" id="T6"><br></td>
+				<td style="vertical-align: top;" id="M6"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA0" onclick="trataAnalogico(0,this)" class="inactiva">A0<br></td>
+				<td style="vertical-align: top;" id="VA0"><br></td>
+				<td style="vertical-align: top;" id="A05" onclick="trataDigital('05',this)" class="inactiva">~5<br></td>
+				<td style="vertical-align: top;" id="VD5"><br></td>
+				<td style="vertical-align: top;" id="T5"><br></td>
+				<td style="vertical-align: top;" id="M5"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA1" onclick="trataAnalogico(1,this)" class="inactiva">A1<br></td>
+				<td style="vertical-align: top;" id="VA1"><br></td>
+				<td style="vertical-align: top;">4<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA2" onclick="trataAnalogico(2,this)" class="inactiva">A2<br></td>
+				<td style="vertical-align: top;" id="VA2"><br></td>
+				<td style="vertical-align: top;" id="A03" onclick="trataDigital('03',this)" class="inactiva">~3<br></td>
+				<td style="vertical-align: top;" id="VD3"><br></td>
+				<td style="vertical-align: top;" id="T3"><br></td>
+				<td style="vertical-align: top;" id="M3"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA3" onclick="trataAnalogico(3,this)" class="inactiva">A3<br></td>
+				<td style="vertical-align: top;" id="VA3"><br></td>
+				<td style="vertical-align: top;" id="A02" onclick="trataDigital('02',this)" class="inactiva">2<br></td>
+				<td style="vertical-align: top;" id="VD2"><br></td>
+				<td style="vertical-align: top;" id="T2"><br></td>
+				<td style="vertical-align: top;" ><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA4" onclick="trataAnalogico(4,this)" class="inactiva">A4<br></td>
+				<td style="vertical-align: top;" id="VA4"><br></td>
+				<td style="vertical-align: top;">1<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr><tr>
+				<td style="vertical-align: top;" id="AA5" onclick="trataAnalogico(5,this)" class="inactiva">A5<br></td>
+				<td style="vertical-align: top;" id="VA5"><br></td>
+				<td style="vertical-align: top;">0<br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+				<td style="vertical-align: top;"><br></td>
+			</tr>
+		</tbody></table>
+		<form method="get" action="/IFRAME" name="acciones" target="iframe_a">
+		<!--<form method="get" action="./recibe-parametros3.php" name="acciones" target="iframe_a">-->
+		<!--<iframe src="./recibe-parametros3.php?destino=iframe" name="iframe_a" onload="/*alert('lll'+parent);*/parent.abc(this.contentDocument.getElementsByTagName('body')[0].innerHTML);/*window.frames[0].document.innerHTML)*/"></iframe>-->
+			<input name="destino" id="destino" value="iframe" type="hidden">
+			<input name="codigo" id="codigo" value="1Iiii1Iiii1Iiii1Iiii1Iiii1Iiii1Iiii" type="hidden">
+		</form>
+	</body>
+</html>
