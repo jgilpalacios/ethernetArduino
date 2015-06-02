@@ -117,9 +117,9 @@ void loop() {
         // Si hemos recibido una linea en blanco se completo la solicitud y pasamos a generar la respuesta       
         if (c == '\n' && currentLineIsBlank) { 
           //Ya que hemos convertido la peticion HTTP a una cadena de caracteres, ahora podremos buscar partes del texto.
-          int posicion=cadena.indexOf("destino="); //Guardamos la posicion de la instancia "destino=" a la variable 'posicion' que es lo que nos permite distinguir si es la primera llamda (pagina) o no (iframe)
+          int posicion=cadena.indexOf("/IFRAME"); //Guardamos la posicion de la instancia "destino=" a la variable 'posicion' que es lo que nos permite distinguir si es la primera llamda (pagina) o no (iframe)
  
-          if(cadena.substring(posicion,posicion+14)=="destino=iframe")//Si a la posicion 'posicion' hay "destino=iframe", se pasa a enviar la codificacion del las entradas y a procesar las salidas
+          if(posicion>0)//Si se encuentra el termino debemos enviar las lecturas de de las entradas y a procesar las salidas
           {
             for (int analogChannel = 0; analogChannel < 6; analogChannel++) {//generamos las 6 entradas analogicas (siempre se envian todas)
               int sensorReading = analogRead(analogChannel);
@@ -164,7 +164,13 @@ void loop() {
                  }
 	         if(i<6) client.print("#");//escribimos el separador de item, tras los valores del ultimo (sexto de los usables) pin (9) no debe ir
 	    }
-          }else{ //primera solicitud que se hace a la pagina, se envia la pagina guardada en SD
+          }else if(cadena.indexOf("/CONFIGURA"){//primer acceso se debe pasar los pines digitales INPUT y OUTPUT que se han configurado en la placa arduino
+            for (int i = 0; i < 6; ++) {//indicamos que pines digitales de los posibles se han puesto en INPUT y cuales en OUTPUT
+              client.print(entradas[i]);
+              client.print("#");//separamos canal
+            }//el septimo no lleva separador
+	    client.print(entradas[7]);
+          }else{ //Para cualquier otra solicitud se devuelve la pagina IFRAME.HTM que tiene la interfaz web y se envia la pagina guardada en SD en el directorio raiz.
             //reinicializaSD();
             myFile = SD.open("IFRAME.HTM");
             if (myFile) {
