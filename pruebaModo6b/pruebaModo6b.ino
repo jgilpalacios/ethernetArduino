@@ -164,8 +164,8 @@ void loop() {
                  }
 	         if(i<6) client.print("#");//escribimos el separador de item, tras los valores del ultimo (sexto de los usables) pin (9) no debe ir
 	    }
-          }else if(cadena.indexOf("/CONFIGURA"){//primer acceso se debe pasar los pines digitales INPUT y OUTPUT que se han configurado en la placa arduino
-            for (int i = 0; i < 6; ++) {//indicamos que pines digitales de los posibles se han puesto en INPUT y cuales en OUTPUT
+          }else if(cadena.indexOf("/CONFIGURA")>0){//primer acceso se debe pasar los pines digitales INPUT y OUTPUT que se han configurado en la placa arduino
+            for (int i = 0; i < 6; i++) {//indicamos que pines digitales de los posibles se han puesto en INPUT y cuales en OUTPUT
               client.print(entradas[i]);
               client.print("#");//separamos canal
             }//el septimo no lleva separador
