@@ -32,17 +32,15 @@ Content-Type: text/html
 				if (activo[pos]){
 					document.getElementById('A0'+pos).className='activa';
 					if(tipo_entrada[pos]==1){//alert('vemos algo +');
-						document.getElementById('T'+pos).innerHTML='INPUT';//'<select name="TIPO'+pos+'" onChange="trataTipo('+pos+', this.value)"><option value="0">OUTPUT</option><option selected="selected" value="1">INPUT</option></select>';
-						if(dig_analog[pos]==1){ document.getElementById('M'+pos).innerHTML='';}
+						if(dig_analog[pos]==1){ document.getElementById('T'+pos).innerHTML='';}
 						document.getElementById('VD'+pos).innerHTML=''+dvalores[indice];						
 					}else{//alert('vemos algo');
-						document.getElementById("T"+pos).innerHTML='OUTPUT';//'<select name="TIPO'+pos+'" onChange="trataTipo('+pos+', this.value)"><option selected="selected" value="0">OUTPUT</option><option value="1">INPUT</option></select>';
 						if(dig_analog[pos]==1){
 							if(modo_salida[pos]==0){
-								document.getElementById('M'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0" selected="selected">DIGITAL</option><option value="1">ANALÓGICO</option></select>';
+								document.getElementById('T'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0" selected="selected">DIGITAL</option><option value="1">ANALÓGICO</option></select>';
 								document.getElementById('VD'+pos).innerHTML='<select id="VDD'+indice+'" name="VDD'+indice+'"><option value="1">HIGH</option><option value="0">LOW</option></select>';
 							}else{
-								document.getElementById('M'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0">DIGITAL</option><option value="1" selected="selected">ANALÓGICO</option></select>';
+								document.getElementById('T'+pos).innerHTML='<select name="MODO'+pos+'" onChange="trataModos('+pos+', this.value)"><option value="0">DIGITAL</option><option value="1" selected="selected">ANALÓGICO</option></select>';
 								document.getElementById('VD'+pos).innerHTML='<input maxlength="3" size="3" id="VDA'+indice+'" name="VDA'+indice+'">';
 							}
 						}else{
@@ -52,7 +50,6 @@ Content-Type: text/html
 				}else{
 					document.getElementById('A0'+pos).className='inactiva';
 					document.getElementById('T'+pos).innerHTML='';
-					if(dig_analog[pos]==1) document.getElementById('M'+pos).innerHTML='';
 					document.getElementById('VD'+pos).innerHTML='';
 				}
 			}
@@ -189,8 +186,9 @@ Content-Type: text/html
 			function BlinkSetUP(){
 				aactivo=new Array(0,0,0,0,0,0);//no usamos pines que analogicos
 				activo=new Array      (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//pines digitales que usamos, solo el 6
-				tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el 6  0
-				modo_salida=new Array (0,0,0,0,0,0,0,0,0,0,0,0,0,0);//ciertos pines digitales pueden tener salida analógica o digital.
+				//tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el 6  0
+				//modo_salida=new Array (0,0,0,0,0,0,0,0,0,0,0,0,0,0);//ciertos pines digitales pueden tener salida analógica o digital.
+				modo_salida[6]=0;
 				var indice=3;bindice=indice;//el pin 6 es el 4º de los que se pueden usar
 				var pos=6;bpos=pos;// las dos variables son para el while
 				for (var i=0;i<7;i++){
@@ -220,8 +218,9 @@ Content-Type: text/html
 			function SubeBajaSetUP(){
 				aactivo=new Array(0,0,0,0,0,0);//no usamos pines que analogicos
 				activo=new Array      (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//pines digitales que usamos, solo el 6
-				tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el PIN 6  0
-				modo_salida=new Array (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//SELECCIONAMOS LA SALIDA DIGITAL DEL PIN 6 A 1.
+				//tipo_entrada=new Array(1,1,1,1,1,1,0,1,1,1,1,1,1,1);//los digitales pueden ser INPUT (1) U OUTPUT (0), el PIN 6  0
+				//modo_salida=new Array (0,0,0,0,0,0,1,0,0,0,0,0,0,0);//SELECCIONAMOS LA SALIDA DIGITAL DEL PIN 6 A 1.
+				modo_salida[6]=1;
 				var indice=3;bindice=indice;//el pin 6 es el 4º de los que se pueden usar
 				var pos=6;bpos=pos;// las dos variables son para el while
 				for (var i=0;i<7;i++){
@@ -266,84 +265,84 @@ Content-Type: text/html
 				<td style="vertical-align: top;">13<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;">12<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;">~11<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;">~10<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="A09" onclick="trataDigital('09',this)" class="inactiva">~9<br></td>
 				<td style="vertical-align: top;" id="VD9"><br></td>
 				<td style="vertical-align: top;" id="T9"><br></td>
-				<td style="vertical-align: top;" id="M9"><br></td>
+				<!--<td style="vertical-align: top;" id="M9"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="A08" onclick="trataDigital('08',this)" class="inactiva">8<br></td>
 				<td style="vertical-align: top;" id="VD8"><br></td>
 				<td style="vertical-align: top;" id="T8"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="A07" onclick="trataDigital('07',this)" class="inactiva">7<br></td>
 				<td style="vertical-align: top;" id="VD7"><br></td>
 				<td style="vertical-align: top;" id="T7"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="A06" onclick="trataDigital('06',this)" class="inactiva">~6<br></td>
 				<td style="vertical-align: top;" id="VD6"><br></td>
 				<td style="vertical-align: top;" id="T6"><br></td>
-				<td style="vertical-align: top;" id="M6"><br></td>
+				<!--<td style="vertical-align: top;" id="M6"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA0" onclick="trataAnalogico(0,this)" class="inactiva">A0<br></td>
 				<td style="vertical-align: top;" id="VA0"><br></td>
 				<td style="vertical-align: top;" id="A05" onclick="trataDigital('05',this)" class="inactiva">~5<br></td>
 				<td style="vertical-align: top;" id="VD5"><br></td>
 				<td style="vertical-align: top;" id="T5"><br></td>
-				<td style="vertical-align: top;" id="M5"><br></td>
+				<!--<td style="vertical-align: top;" id="M5"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA1" onclick="trataAnalogico(1,this)" class="inactiva">A1<br></td>
 				<td style="vertical-align: top;" id="VA1"><br></td>
 				<td style="vertical-align: top;">4<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA2" onclick="trataAnalogico(2,this)" class="inactiva">A2<br></td>
 				<td style="vertical-align: top;" id="VA2"><br></td>
 				<td style="vertical-align: top;" id="A03" onclick="trataDigital('03',this)" class="inactiva">~3<br></td>
 				<td style="vertical-align: top;" id="VD3"><br></td>
 				<td style="vertical-align: top;" id="T3"><br></td>
-				<td style="vertical-align: top;" id="M3"><br></td>
+				<!--<td style="vertical-align: top;" id="M3"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA3" onclick="trataAnalogico(3,this)" class="inactiva">A3<br></td>
 				<td style="vertical-align: top;" id="VA3"><br></td>
 				<td style="vertical-align: top;" id="A02" onclick="trataDigital('02',this)" class="inactiva">2<br></td>
 				<td style="vertical-align: top;" id="VD2"><br></td>
 				<td style="vertical-align: top;" id="T2"><br></td>
-				<td style="vertical-align: top;" ><br></td>
+				<!--<td style="vertical-align: top;" ><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA4" onclick="trataAnalogico(4,this)" class="inactiva">A4<br></td>
 				<td style="vertical-align: top;" id="VA4"><br></td>
 				<td style="vertical-align: top;">1<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr><tr>
 				<td style="vertical-align: top;" id="AA5" onclick="trataAnalogico(5,this)" class="inactiva">A5<br></td>
 				<td style="vertical-align: top;" id="VA5"><br></td>
 				<td style="vertical-align: top;">0<br></td>
 				<td style="vertical-align: top;"><br></td>
 				<td style="vertical-align: top;"><br></td>
-				<td style="vertical-align: top;"><br></td>
+				<!--<td style="vertical-align: top;"><br></td>-->
 			</tr>
 		</tbody></table>
 		<form method="get" action="/IFRAME" name="acciones" target="iframe_a">

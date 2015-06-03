@@ -21,7 +21,7 @@ app.get('/IFRAME',function (req, res){
 });
 
 app.get('/CONFIGURA',function (req, res){
-  var mensaje='1#1#0#0#1#1#1';
+  var mensaje='1#1#0#0#0#1#1';
   res.send(mensaje);
 });
 
