@@ -61,7 +61,9 @@ int posibles[]={2,3,5,6,7,8,9};//pines digitales que quedan libres para usar. po
 int digitPWM[]={0,1,1,1,0,0,1};//pines que permiten salida PWM (1) los que no lo hacen (0), se corresponden en posicion con array posibles
 //funcion para analizar la solicitud
 String cadena=""; //Creamos una cadena de caracteres vacia que almacena la peticion http para su posterior analisis
-
+//cabeceras que permiten al navegador distinguir si se recibe texto llano o html
+String inicioTexto="HTTP/1.1 200 OK\nContent-Type: text/plain\n\n";
+String inicioHTML="HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
 
 void setup() {
  // Se abre la comunicacion serie y se espera hasta que el puerto se abre:
@@ -120,7 +122,8 @@ void loop() {
           int posicion=cadena.indexOf("/IFRAME"); //Guardamos la posicion de la instancia "destino=" a la variable 'posicion' que es lo que nos permite distinguir si es la primera llamda (pagina) o no (iframe)
  
           if(posicion>0)//Si se encuentra el termino debemos enviar las lecturas de de las entradas y a procesar las salidas
-          {
+          { 
+            client.print(inicioTexto);//indicamos que se trata de texto sin marcas html
             for (int analogChannel = 0; analogChannel < 6; analogChannel++) {//generamos las 6 entradas analogicas (siempre se envian todas)
               int sensorReading = analogRead(analogChannel);
               client.print(sensorReading);
@@ -165,6 +168,7 @@ void loop() {
 	         if(i<6) client.print("#");//escribimos el separador de item, tras los valores del ultimo (sexto de los usables) pin (9) no debe ir
 	    }
           }else if(cadena.indexOf("/CONFIGURA")>0){//primer acceso se debe pasar los pines digitales INPUT y OUTPUT que se han configurado en la placa arduino
+            client.print(inicioTexto);//indicamos que se trata de texto sin marcas html
             for (int i = 0; i < 6; i++) {//indicamos que pines digitales de los posibles se han puesto en INPUT y cuales en OUTPUT
               client.print(entradas[i]);
               client.print("#");//separamos canal
@@ -175,7 +179,7 @@ void loop() {
             myFile = SD.open("IFRAME.HTM");
             if (myFile) {
               //Serial.println("IFRAME.HTM");
-    
+              client.print(inicioHTML);//indicamos que se trata de una pagina html
               // Se lee del archivo hasta que ya no que se complete la lectura:
               while (myFile.available()) {
                 aux=myFile.read();//convertimos los numeros que se leen a caracter ya que aux es de tipo char
