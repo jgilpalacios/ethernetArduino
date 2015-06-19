@@ -62,8 +62,8 @@ int digitPWM[]={0,1,1,1,0,0,1};//pines que permiten salida PWM (1) los que no lo
 //funcion para analizar la solicitud
 String cadena=""; //Creamos una cadena de caracteres vacia que almacena la peticion http para su posterior analisis
 //cabeceras que permiten al navegador distinguir si se recibe texto llano o html
-String inicioTexto="HTTP/1.1 200 OK\nContent-Type: text/plain\n\n";
-String inicioHTML="HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
+String inicioTexto="HTTP/1.1 200 OK\nContent-Type: text/plain\nConnection: close\n\n";
+String inicioHTML="HTTP/1.1 200 OK\nContent-Type: text/html\nConnection: close\n\n";
 
 void setup() {
  // Se abre la comunicacion serie y se espera hasta que el puerto se abre:
